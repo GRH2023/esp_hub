@@ -1,0 +1,4 @@
+[
+  { "id": "esp32-a", "name": "Light sensor", "base": "http://192.168.43.224" }
+]
+
