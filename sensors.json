@@ -1,4 +1,4 @@
 [
-  { "id": "esp32-a", "name": "Light sensor", "base": "http://192.168.43.224" }
+  { "id": "current", "name": "Current sensor" },
+  { "id": "photo",   "name": "Light sensor"   }
 ]
-
