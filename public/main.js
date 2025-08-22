@@ -1,10 +1,11 @@
-// public/main.js
-// Adds per-sensor Baseline + %Drop -> auto threshold (computed), with persistence.
-// Keeps: per-sensor display config, mA for "current", fixed Y ranges, charts, history, online badge.
+//Mainly chatgpt, but modified slightly to fit our project:
 
-// ----- per-sensor display config -----
+// Adds per-sensor Baseline + %Drop -> auto threshold (computed), with persistence.
+// per-sensor display config, mA for "current", fixed Y ranges, charts, history, online badge.
+
+// sensor display config pr. sensor
 const SENSOR_CONFIG = {
-  // id must match topic "sensor/<id>"
+  // OBS.: match topic and ID ("sensor/<id>")
   photo: {
     unit: "",                       // raw ADC counts
     transform: v => Math.round(v),  // display conversion
@@ -15,15 +16,15 @@ const SENSOR_CONFIG = {
   },
   current: {
     unit: " mA",
-    transform: v => Math.round(v * 1000), // amps -> mA
-    yMin: 300,  // band you expect (edit as you like)
+    transform: v => Math.round(v * 1000), // amps in mA (cause test readings are >0.6 amp)
+    yMin: 300,
     yMax: 500,
     tick: 25,
-    defaultThreshold: 400 // mA
+    defaultThreshold: 400 
   }
 };
 
-// Fallback if an id has no explicit config
+// default sensor setup if no match
 const DEFAULT_CFG = {
   unit: "",
   transform: v => v,
@@ -40,11 +41,11 @@ const fmt    = t  => new Date(t).toLocaleTimeString();
 const cfgFor = id => SENSOR_CONFIG[id] || DEFAULT_CFG;
 
 // localStorage keys
-const LS_THR  = id => `threshold:${id}`;       // not strictly needed (derived), but we show it
+const LS_THR  = id => `threshold:${id}`;
 const LS_BASE = id => `baseline:${id}`;
 const LS_DROP = id => `dropPct:${id}`;
 
-// Build one card
+// card creation in html
 function createCard({ id, name }) {
   const cfg = cfgFor(id);
 

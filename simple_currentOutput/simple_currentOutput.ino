@@ -1,12 +1,12 @@
 //current meassuremnts
 #include <PubSubClient.h>
 #include <WiFi.h>
-#include "wifi_config.h"  // Your WiFi credentials (ssid, password)
+#include "wifi_config.h"  // wifi credentials kept in a seperate file(ssid + pass)
 
 // -------- MQTT / Network --------
-const char* mqtt_server = "192.168.164.150"; 
+const char* mqtt_server = "192.168.164.150"; //running mosquitto
 const int mqtt_port = 1883;
-const char* mqtt_topic = "sensor/current";
+const char* mqtt_topic = "sensor/current";  //sub for current sensor
 const char* clientBaseID = "ESP32C6_Client_";
 String resetStatusMsg = "";
 bool waitingForResetAck = false;

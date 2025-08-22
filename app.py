@@ -1,9 +1,9 @@
-# app.py — MQTT-driven hub backend
-# - Subscribes to a single broker (configured below)
-# - Accepts MQTT payloads on topics: sensor/<id>
-#     * Photo sensor:  {"adc": <int>, ...}
-#     * Current sensor:{"current": <amps float>, ...}
-# - Serves the same /api/* endpoints your page already uses
+# Mainly chatgpt below, but modified to fit our project:
+
+# Subscribes to a broker (Mosquitto)
+# Accepts all json payloads from sensor/#
+# Sets up a webpage from the java script files 
+# Requires paho mqtt lib
 
 import json
 import time
@@ -18,20 +18,19 @@ import paho.mqtt.client as mqtt
 app = Flask(__name__, static_folder="public", static_url_path="")
 
 # ---------- Config ----------
-# Set these to your broker (matches your ESP32 sketches)
+#Broker IP and port:
 MQTT_HOST = "192.168.164.150"
 MQTT_PORT = 1883
-
-# Topics your sensors publish to (base topic only)
-# e.g. "sensor/current", "sensor/photo"
+# sensor subscription setup to sensor/+ to support base sub+different sensors:
 TOPIC_FILTER = "sensor/+"
 
-# sensors.json (optional pretty names & order)
+# Sensors added seperately in sensors.json for readability:
 SENSORS_PATH = Path(__file__).parent / "sensors.json"
 if SENSORS_PATH.exists():
     SENSORS = json.loads(SENSORS_PATH.read_text(encoding="utf-8"))
 else:
-    SENSORS = []  # we can still learn sensors dynamically
+    SENSORS = [] # if they "pop-up" by themselves
+
 
 # State: latest + rolling history per id
 # latest: { id: {t: wallclock_ms, v: numeric} }
@@ -70,24 +69,22 @@ def on_message(client, userdata, message):
         print("[MQTT] Bad JSON:", e, "topic:", message.topic)
         return
 
-    # Accept both styles:
-    #  - photo:   {"adc": <int>}
-    #  - current: {"current": <amps float>}
+    # 'if sensor==current sensor, then read current, if sensor==photo, then read adc value' etc:
     val = None
     if "current" in j:
         try:
-            val = float(j["current"])       # amps from device
+            val = float(j["current"])
         except Exception:
             val = 0.0
     elif "adc" in j:
         try:
-            val = int(float(j["adc"]))      # raw ADC counts
+            val = int(float(j["adc"]))
         except Exception:
             val = 0
     else:
-        return  # nothing to chart
+        return  # return nothing
 
-    # Learn unknown sensors dynamically
+    # add unknown sensors dynamically
     if sid not in history:
         history[sid] = deque(maxlen=50)
         if all(s["id"] != sid for s in SENSORS):
@@ -97,15 +94,13 @@ def on_message(client, userdata, message):
     entry = {"t": now_ms(), "v": val}
     latest[sid] = entry
     history[sid].append(entry)
-    # Debug log:
+    # Debug
     # print(f"[MQTT] {sid}: v={val}")
 
 def start_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="hub-subscriber")
     client.on_connect = on_connect
     client.on_message = on_message
-    # Auth if needed:
-    # client.username_pw_set("user", "pass")
 
     client.reconnect_delay_set(min_delay=1, max_delay=30)
     try:
@@ -119,7 +114,7 @@ def start_mqtt():
 
 mqtt_client = start_mqtt()
 
-# ---------- API ----------
+# "API's":
 @app.route("/api/sensors")
 def api_sensors():
     # List of cards to render: [{id,name}]
@@ -144,5 +139,4 @@ def assets(path):
     return send_from_directory(app.static_folder, path)
 
 if __name__ == "__main__":
-    # If you want HTTPS, add ssl_context=("server.pem","server.key")
     app.run(host="0.0.0.0", port=8443, debug=False)
