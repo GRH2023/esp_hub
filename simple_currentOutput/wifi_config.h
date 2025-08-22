@@ -1,7 +1,7 @@
 #ifndef WIFI_CONFIG_H
 #define WIFI_CONFIG_H
 
-// Replace these with your actual Wi-Fi credentials
-const char* ssid = "Galaxy";
-const char* password = "nicklas15";
+//wifi credentials:
+const char* ssid = "removed";
+const char* password = "removed";
 #endif
